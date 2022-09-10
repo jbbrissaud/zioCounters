@@ -17,7 +17,7 @@ implicit class RunSyntax[E,A](io: ZIO[Any, E, A]) {
 object App:
 
   def appComponent = 
-    //div("Salut toi")
+    //div("Salut")
     val myZio = ZIO.succeed(div("salut"))
     myZio.unsafeRun
   def main(args: Array[String]): Unit =
