@@ -1,0 +1,10 @@
+*
+!*/
+!backend/src/**
+!frontend/src/**
+!frontend/static/**
+!shared/src/**
+!.gitignore
+!build.sbt
+!LICENSE
+!README.md

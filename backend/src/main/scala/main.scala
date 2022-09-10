@@ -30,7 +30,7 @@ object WebServer extends ZIOAppDefault:
     }
   private val appHello: Http[Any, Nothing, Request, Response] =
     Http.collectZIO[Request] {
-      case Method.GET -> !! / "hello" / name  => 
+      case Method.GET -> !! / "hello1" / name  => 
         //ZIO.succeed(Response.text(s"Hello $name!"))
         ZIO.succeed(Response.text(s"Bonjour ${name}!"))
     }
