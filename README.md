@@ -16,11 +16,14 @@ sbt "~backend / run"
 sbt "~frontend / fastOptJS"
 ```
 
-#### - tab 3
+### 3. Test the app
 
 
 Then you can access the frontend at http://localhost:8090
 
 
-This project is a Proof of Concept for Scala 3 + ZIO 2 + zio-http + Laminar so not all simplifications or refactors that
-can be done are done.
+This project is a Proof of Concept for Scala 3 + ZIO 2 + zio-http + Laminar.
+The backend uses zio-http and zio 2.
+The frontend uses Laminar and zio 2, allowing parallelism in a single-threaded web page.
+The project is in itself totally useless, but is a good starting point for anyone interested in this amazing technology.
+
