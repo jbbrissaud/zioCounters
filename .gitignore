@@ -1,10 +1,20 @@
+# DO NOT ignore:
+# 1/ files in backend/src, frontend/src, frontend/static and shared/src (or in subdirectories).
+# 2/ files build.sbt, project/build.properties, LICENSE, README.md and .gitignore
+# ignore all other files.
+
 *
 !*/
+
 !backend/src/**
 !frontend/src/**
 !frontend/static/**
 !shared/src/**
-!.gitignore
+
 !build.sbt
+!project/build.properties
+
 !LICENSE
 !README.md
+
+!.gitignore
