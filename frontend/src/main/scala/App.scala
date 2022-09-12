@@ -16,17 +16,38 @@ implicit class RunSyntax[E,A](io: ZIO[Any, E, A]) {
 }
 
 object App:
+  def doPar(content1:Var[String],content2:Var[String]):Unit = 
+    def loop(n:Int,d:Duration,content:Var[String]):ZIO[Any,Nothing,Unit] =
+      for
+        _ <- ZIO.succeed(content.set(n.toString()))
+        _ <- ZIO.sleep(d)
+        _ <- loop(n+1,d,content)
+      yield ()
+    val zio1 = loop(10,1.second,content1)
+    val zio2 = loop(100,500.millisecond,content2)
+    val zio = 
+      for
+        fiber1 <- zio1.fork
+        _ <- zio2
+        _ <- fiber1.join
+      yield ()
+    zio.timeout(5.second).unsafeRun
+
 
   def appComponent = 
-    val content = Var(ZIO.succeed("ok"))
-    content.set(ZIO.succeed("ok1"))
+    val content1 = Var("init1")
+    val content2 = Var("init2")
+    val useless = Var(())
     div(
       button(
         "click me",
-        onClick.map(_ => ZIO.succeed("toto")) --> content
+        onClick.map(_ => doPar(content1,content2)) --> useless
         ),
       textArea(
-        child.text <-- content.signal.map(_.unsafeRun)
+        child.text <-- content1.signal
+      ),
+      textArea(
+        child.text <-- content2.signal
       )
     )
   def main(args: Array[String]): Unit =
