@@ -19,7 +19,8 @@ sbt "~frontend / fastOptJS"
 ### 3. Test the app
 
 
-Then you can access the frontend at http://localhost:8090
+Then you can access the frontend at http://localhost:8090 \
+click on one button or the other and see parallelism.
 
 
 This project is a Proof of Concept for Scala 3 + ZIO 2 + zio-http + Laminar.\

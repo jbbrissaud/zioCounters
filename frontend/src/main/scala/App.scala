@@ -5,6 +5,7 @@ import org.scalajs.dom
 
 import zio.*
 
+////////////// cool syntax for unsafeRun
 val myRuntime = Runtime.default.unsafe
 
 implicit class RunSyntax[E,A](io: ZIO[Any, E, A]) {
@@ -15,7 +16,10 @@ implicit class RunSyntax[E,A](io: ZIO[Any, E, A]) {
     }
 }
 
+///////////// main
 object App:
+  // doPar sets: 10, 11, 12, ... to content1 (1 number per second) and 100, 101, 102, ... to content2 (1 number every 500ms)
+  // this stops after 10 seconds.
   def doPar(content1:Var[String],content2:Var[String]):Unit = 
     def loop(n:Int,d:Duration,content:Var[String]):ZIO[Any,Nothing,Unit] =
       for
@@ -31,12 +35,14 @@ object App:
         _ <- zio2
         _ <- fiber1.join
       yield ()
-    zio.timeout(5.second).unsafeRun
+    zio.timeout(10.second).unsafeRun
 
 
   def appComponent = 
     val content1 = Var("init1")
     val content2 = Var("init2")
+    val content3 = Var("init3")
+    val content4 = Var("init4")
     val useless = Var(())
     div(
       button(
@@ -48,6 +54,16 @@ object App:
       ),
       textArea(
         child.text <-- content2.signal
+      ),
+      button(
+        "or click me",
+        onClick.map(_ => doPar(content3,content4)) --> useless
+        ),
+      textArea(
+        child.text <-- content3.signal
+      ),
+      textArea(
+        child.text <-- content4.signal
       )
     )
   def main(args: Array[String]): Unit =
