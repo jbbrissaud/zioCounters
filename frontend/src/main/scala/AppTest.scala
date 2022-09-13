@@ -9,6 +9,7 @@ val myRuntime = Runtime.default.unsafe
 
 object App:
   def myComponent =
+    var fiberOpt: Option[Fiber[Nothing,Option[Unit]]] = None
     val content = Var("init1")
     def loop(n:Int,d:Duration):ZIO[Any,Nothing,Unit] =
       for
@@ -17,10 +18,14 @@ object App:
         _ <- loop(n+1,d)
       yield ()
     def doClick(clickEvent:Any): Unit = 
+      fiberOpt match
+        case None => 
+        case Some(fiber) => fiber.interrupt
       val zio1 = loop(10,1.second)
       val zio2 = zio1.timeout(10.second)
       Unsafe.unsafeCompat { implicit u =>
-        myRuntime.run(zio2)
+        val fiber = myRuntime.fork(zio2)
+        fiberOpt = Some(fiber)
       }
     div(
       button(
