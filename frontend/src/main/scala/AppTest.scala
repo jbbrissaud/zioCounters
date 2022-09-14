@@ -7,9 +7,17 @@ import zio.*
 
 val myRuntime = Runtime.default.unsafe
 
+implicit class RunSyntax[E,A](io: ZIO[Any, E, A]) {
+  // My thanks to Adam Fraser for the code
+  def unsafeRun: A =
+    Unsafe.unsafeCompat { implicit u =>
+      myRuntime.run(io).getOrThrowFiberFailure()
+    }
+}
+
 object App:
   def myComponent =
-    var fiberOpt: Option[Fiber[Nothing,Option[Unit]]] = None
+    val fiberOptRef: zio.Ref[Option[Fiber.Runtime[Nothing,Option[Unit]]]] = zio.Ref.make(None).unsafeRun
     val content = Var("init1")
     def loop(n:Int,d:Duration):ZIO[Any,Nothing,Unit] =
       for
@@ -18,15 +26,30 @@ object App:
         _ <- loop(n+1,d)
       yield ()
     def doClick(clickEvent:Any): Unit = 
-      fiberOpt match
-        case None => 
-        case Some(fiber) => fiber.interrupt
       val zio1 = loop(10,1.second)
       val zio2 = zio1.timeout(10.second)
-      Unsafe.unsafeCompat { implicit u =>
-        val fiber = myRuntime.fork(zio2)
-        fiberOpt = Some(fiber)
-      }
+      val zio3 =
+        fiberOptRef.get.flatMap(opt =>
+          opt match
+            case None => ZIO.succeed(())
+            case Some(fiber) => 
+              for
+                _ <-fiber.interrupt
+              yield ()
+          )
+      val zio4 = 
+        for
+          _ <- zio3
+          fiber <- zio2.fork
+          _ <- fiberOptRef.set(Some(fiber))
+          _ <-fiber.join
+        yield ()
+      zio4.unsafeRun
+          
+
+
+
+
     div(
       button(
         "click me",
