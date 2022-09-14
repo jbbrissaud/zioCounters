@@ -25,43 +25,43 @@ object App:
         _ <- ZIO.sleep(d)
         _ <- loop(n+1,d)
       yield ()
-    def doClick(clickEvent:Any): Unit = 
-      val zio1 = loop(10,1.second)
-      val zio2 = zio1.timeout(10.second)
-      val zio3 =
-        fiberOptRef.get.flatMap(opt =>
-          opt match
-            case None => ZIO.succeed(())
-            case Some(fiber) => 
-              for
-                _ <-fiber.interrupt
-              yield ()
-          )
-      val zio4 = 
-        for
-          _ <- zio3
-          fiber <- zio2.fork
-          _ <- fiberOptRef.set(Some(fiber))
-          _ <-fiber.join
-        yield ()
-      zio4.unsafeRun
-          
-
-
-
-
+    def interrupt(fiberOptRef:zio.Ref[Option[Fiber.Runtime[Nothing,Option[Unit]]]]): ZIO[Any,Nothing,Unit] =
+      fiberOptRef.get.flatMap{
+          case None => ZIO.succeed(())
+          case Some(fiber) => fiber.interrupt.map(_ => ())
+      }
+    val zio1 = loop(10,1.second)
+    val zio2 = zio1.timeout(10.second)
+    val zio3 = 
+      for
+        _ <- interrupt(fiberOptRef)
+        fiber <- zio2.fork
+        _ <- fiberOptRef.set(Some(fiber))
+        _ <- fiber.join
+      yield ()
+    def doClick1(clickEvent:Any): Unit = 
+      zio3.unsafeRun
+    def doClick2(clickEvent:Any): Unit = 
+      interrupt(fiberOptRef).unsafeRun
     div(
       button(
         "click me",
-        onClick --> doClick
+        onClick --> doClick1
         ),
+      button(
+        "stop",
+        onClick --> doClick2
+      ),
       textArea(
         child.text <-- content.signal
       ),
     )
 
   def appComponent = 
-    myComponent
+    div(
+      myComponent,
+      myComponent
+    )
 
   def main(args: Array[String]): Unit =
     val _ = documentEvents.onDomContentLoaded.foreach { _ =>
