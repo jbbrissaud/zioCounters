@@ -8,50 +8,61 @@ import zio.stm._
 
 val myRuntime = Runtime.default.unsafe
 
-implicit class RunSyntax[E,A](io: ZIO[Any, E, A]):
+/*implicit class RunSyntax[E,A](io: ZIO[Any, E, A]):
   // My thanks to Adam Fraser for the code
   def unsafeRun: A =
     Unsafe.unsafeCompat { implicit u =>
       myRuntime.run(io).getOrThrowFiberFailure()
-    }
+    }*/
+
+def zioRun[E,A](zio1:ZIO[Any,E,A]): A =
+  Unsafe.unsafeCompat { implicit u =>
+    myRuntime.run(zio1).getOrThrowFiberFailure()
+  }
+
+def zioFork[E,A](zio1:ZIO[Any,E,A]):Fiber.Runtime[E,A] =
+  Unsafe.unsafeCompat { implicit u =>
+    myRuntime.fork((zio1))
+  }
 
 object App:
   def myComponent =
-    val signal:TRef[Boolean] = TRef.make(true).commit.unsafeRun
-    val gate = Gate(signal)
-    val fiberOptRef: zio.Ref[Option[Fiber.Runtime[Nothing,Unit]]] = zio.Ref.make(None).unsafeRun
-    val content = Var("init1")
-    def zioFork(zio1:ZIO[Any,Nothing,Unit]):Fiber.Runtime[Nothing,Unit] =
-      Unsafe.unsafeCompat { implicit u =>
-        myRuntime.fork((zio1))
+    val gate = 
+      val signal:TRef[Boolean] = zioRun(TRef.make(true).commit)
+      Gate(signal)
+    val ref: zio.Ref[Option[Fiber.Runtime[Nothing,Unit]]] = zioRun(zio.Ref.make(None))
+    def interrupt(): ZIO[Any,Nothing,Unit] =
+      ref.get.flatMap{
+          case None => ZIO.succeed(())
+          case Some(fiber) => fiber.interrupt.map(_ => ())
       }
+    def lock(): UIO[Unit] = gate.lock()
+    def unlock(): UIO[Unit] = gate.unlock()
+    def waitIfLocked(): UIO[Unit] = gate.waitIfLocked()
+
+    val content = Var("init1")
     def loop(n:Int,d:Duration):ZIO[Any,Nothing,Unit] =
       for
         _ <- ZIO.succeed(content.set(n.toString()))
         _ <- ZIO.sleep(d)
-        _ <- gate.waitIfLocked()
+        _ <- waitIfLocked()
         _ <- loop(n+1,d)
       yield ()
-    def interrupt(): ZIO[Any,Nothing,Unit] =
-      fiberOptRef.get.flatMap{
-          case None => ZIO.succeed(())
-          case Some(fiber) => fiber.interrupt.map(_ => ())
-      }
-    val zio1 = loop(10,1.second)
-    val zio2 = zio1.timeout(10.second).as(())
-    def doStart(clickEvent:Any): Unit = 
-      val fiber = zioFork(zio2)
-      fiberOptRef.set(Some(fiber)).unsafeRun
+    val zio1 = loop(10,100.millisecond)
+    val zio2 = zio1.timeout(30.second).as(())
+    def doStart(zio1:ZIO[Any,Nothing,Unit])(clickEvent:Any): Unit = 
+      val fiber = zioFork(interrupt() *> unlock() *> zio1)
+      zioRun(ref.set(Some(fiber)))
     def doStop(clickEvent:Any): Unit = 
-      zioFork(interrupt())
+      zioFork(interrupt() *> unlock())
     def doPause(clickEvent:Any): Unit = 
-      zioFork(gate.lock())
+      zioRun(lock())
     def doResume(clickEvent:Any): Unit = 
-      zioFork(gate.unlock())
+      zioRun(unlock())
     div(
       button(
-        "click me",
-        onClick --> doStart
+        "start",
+        onClick --> doStart(zio2)
         ),
       button(
         "stop",
