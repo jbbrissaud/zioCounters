@@ -13,6 +13,7 @@
 
 !build.sbt
 !project/build.properties
+!project/plugins.sbt
 
 !LICENSE
 !README.md
