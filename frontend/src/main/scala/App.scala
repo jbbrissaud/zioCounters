@@ -123,14 +123,8 @@ object MyApp:
     for myComponent <- myComponents do
       myDiv.amend(myComponent.elem)
     myDiv
-
-  def main(args: Array[String]): Unit =
-    val _ = documentEvents.onDomContentLoaded.foreach { _ =>
-      val appContainer = dom.document.querySelector("#app")
-      appContainer.innerHTML = ""
-      val _            = render(appContainer, appComponent)
-    }(unsafeWindowOwner)
-
+    
+  def test() =
     val r = scala.util.Random
     val nbr = 40
     for i <- 1 to nbr do
@@ -140,4 +134,13 @@ object MyApp:
         case 0 => myComponent.start(100*i+n*10)
         case 1 => myComponent.stop()
         case 2 => myComponent.pause()
-        case 3=> myComponent.resume()
+        case 3 => myComponent.resume()
+
+  def main(args: Array[String]): Unit =
+    val _ = documentEvents.onDomContentLoaded.foreach { _ =>
+      val appContainer = dom.document.querySelector("#app")
+      appContainer.innerHTML = ""
+      val _            = render(appContainer, appComponent)
+    }(unsafeWindowOwner)
+    test()
+
