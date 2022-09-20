@@ -26,6 +26,8 @@ sbt "~frontend / fastOptJS"
 
 Then you can access the frontend at http://localhost:8090 \
 click on one button or the other and see parallelism.
+200 counters are displayed, and can be run independently. Each counter will stop counting 30 seconds after a start.
+The start depends on the x position of the mouse.
 
 
 Note: The .gitignore file is a little bit unconventional, indicating what to keep and not what to ignore.

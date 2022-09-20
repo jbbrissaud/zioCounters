@@ -36,7 +36,7 @@ def myCounter: ControlledWebComponent[Div,Int] = new ControlledWebComponent[Div,
       def loop(n:Int):ZIO[Any,Nothing,Unit] =
         for
           _ <- ZIO.succeed(content.set(n.toString())) *> ZIO.sleep(period)
-          _ <- waitIfLocked()
+          _ <- waitIfLocked()  // used to pause/resume
           _ <- loop(n+1)
         yield ()
       val zio1 = loop(n)
@@ -44,7 +44,7 @@ def myCounter: ControlledWebComponent[Div,Int] = new ControlledWebComponent[Div,
   }
   def doStart(ev:dom.MouseEvent): Unit =
     val n = ev.clientX.toInt
-    start(n)
+    start(n*100)
   def doStop(ev:dom.MouseEvent) = stop()
   def doPause(ev:dom.MouseEvent) = pause()
   def doResume(ev:dom.MouseEvent) = resume()

@@ -46,7 +46,7 @@ trait ControlledZio:
   private val gate = 
     val signal:TRef[Boolean] = zioRun(TRef.make(true).commit)
     Gate(signal)
-  private var opt: Option[Fiber.Runtime[Nothing,Unit]] = None
+  private var opt: Option[Fiber.Runtime[Nothing,Unit]] = None  // a TRef is not necessary here.
 
 //////////////////////////////////////////////
 
